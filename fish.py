@@ -97,25 +97,50 @@ class Interpreter:
     ><> "compiler" and interpreter.
 
     """
-    def __init__(self, code):
+    def __init__(self, code, debug=False):
         """
         Initialize a new interpreter.
 
         Arguments:
             code -- the code to execute as a string
+            debug -- whether to interpret in debugging mode (default: False)
         """
+
         # check for hashbang in first line
         lines = code.split("\n")
         if lines[0][:2] == "#!":
             code = "\n".join(lines[1:])
 
+        # debugging information
+        self._breakpoints = []
+        self._debug = debug
+        self._output_buffer = ""
+
         # construct a 2D defaultdict to contain the code
         self._codebox = defaultdict(lambda: defaultdict(int))
         line_n = char_n = 0
         for char in code:
-            # stop adding
-            if ord(char) > 128:
-                break
+
+            # backtick encountered and not in string mode.
+            if ord(char) == 96:
+
+                # if we already have a breakpoint on
+                # [line_n, 0], this must be the second
+                # backtick on the beginning of a line
+                if [0, line_n] in self._breakpoints:
+
+                    # remove previously put breakpoint
+                    self._breakpoints.remove([0, line_n])
+
+                    # stop looking for characters
+                    break
+
+                # else, we add a breakpoint
+                self._breakpoints.append([char_n, line_n])
+
+                # and continue
+                continue
+
             if char != "\n":
                 self._codebox[line_n][char_n] = 0 if char == " " else ord(char)
                 char_n += 1
@@ -138,9 +163,6 @@ class Interpreter:
 
         # is the last outputted character a newline?
         self._newline = None
-
-        # list of breakpoints
-        self._breakpoints = []
 
 
     def move(self):
@@ -187,14 +209,21 @@ class Interpreter:
                 raise KeyboardInterrupt
             except Exception as e:
                 raise StopExecution("something smells fishy...")
+
+            # debug
+            if self._position in self._breakpoints:
+                self.print_(debug=True)
+
             return instruction
 
         self._skip = False
+
 
     def _handle_instruction(self, instruction):
         """
         Execute an instruction.
         """
+
         if instruction == None:
             # error on invalid characters
             raise Exception
@@ -364,6 +393,8 @@ class Interpreter:
 
         # the end
         elif instruction == ";":
+            if self._debug:
+                self.print_(True)
             raise StopExecution()
 
         # space is NOP
@@ -408,10 +439,15 @@ class Interpreter:
         """
         Output a string without a newline appended.
         """
+        # convert to outputtable representation
         output = str(output)
+        # append to the output buffer
+        self._output_buffer += output
         self._newline = output.endswith("\n")
-        sys.stdout.write(output)
-        sys.stdout.flush()
+        # output if not in debugging mode
+        if not self._debug:
+            sys.stdout.write(output)
+            sys.stdout.flush()
 
     def print_(self, debug=False):
         """
@@ -419,7 +455,14 @@ class Interpreter:
 
         Keyword arguments:
             debug -- whether to print debug information (default: False)
+            output -- whether to resume normal printing of the output (default: False)
         """
+
+        # print a separator if not in debug mode
+        # (not every step is outputted)
+        if not self._debug:
+            print('')
+            self._separator()
 
         s = ''
         for x in self._codebox:
@@ -432,6 +475,7 @@ class Interpreter:
                 # add to string
                 s += nc
             s += '\n'
+        # print
         print(s)
         # debug information
         if debug:
@@ -441,9 +485,26 @@ class Interpreter:
                     print('Direction: ' + k)
             # stack
             print('Stack: ' + str(self._stack))
+            # register
+            if self._register_stack[-1]:
+                print('Register: ' + str(self._register_stack))
+            # output
+            if self._output_buffer:
+                print('Output:')
+                print(self._output_buffer)
         # separator
-        print('-' * (1 + max([max(x.keys()) for x in self._codebox.values()])))
+        self._separator()
 
+        # if not in debugging mode, we resume with normal output
+        if not self._debug:
+            sys.stdout.write(self._output_buffer)
+            sys.stdout.flush()
+
+    def _separator(self):
+        """
+        Print a separator the width of the program.
+        """
+        print('-' * (1 + max([max(x.keys()) for x in self._codebox.values()])))
 
 
 class StopExecution(Exception):
@@ -542,7 +603,7 @@ if __name__ == "__main__":
     else:
         code = arguments.code
 
-    interpreter = Interpreter(code)
+    interpreter = Interpreter(code, debug=arguments.debug)
 
     # add supplied values to the interpreters stack
     if arguments.stack:
@@ -564,7 +625,10 @@ if __name__ == "__main__":
 
             if instr and not instr == " " or arguments.always_tick:
                 time.sleep(arguments.tick)
-                interpreter.print_()
+
+            # debugging
+            if arguments.debug:
+                interpreter.print_(True)
 
     except KeyboardInterrupt:
         # exit cleanly
