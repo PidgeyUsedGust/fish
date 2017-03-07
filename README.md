@@ -2,11 +2,11 @@
 
 This is Harpyon's original [fish.py](https://gist.github.com/anonymous/6392418) implementation, extended with debugging capabilities. Inspiration comes from [fishlanguage.com](http://fishlanguage.com) and the debugging functionality offered by the official  [Hexagony](https://github.com/m-ender/hexagony) interpreter.
 
-I really like **><>**, but lacking a proper way of debugging makes programming in it pretty hard. The online interpreter provides a good start, but still requires to sit trough almost all of the animation, manually pausing at the desired point.
+I really like **><>**, but lacking a proper way of debugging makes programming in it pretty hard. The online interpreter provides a good start, but still requires to sit trough almost all of the animation, manually pausing at the desired point. Furthermore, it is not guaranteed to be up all the time.
 
-In general, functionality of the original *fish.py* interpreter shouldn't have changed.
+In general, functionality of the original *fish.py* interpreter shouldn't have changed. Rather, two things were added as explained in the next two sections.
 
-## Debug view
+### Debug view
 
 A debug view prints the program with the last executed instruction in red. Furthermore, it displays
 
@@ -15,23 +15,23 @@ A debug view prints the program with the last executed instruction in red. Furth
 * the register
 * the direction of the instruction pointer
 
-There are two main ways to trigger debug views.
+whenever they are applicable. There are two main ways to trigger debug views.
 
-### Debug mode
+#### Debug mode
 
 When running the interpreter with the `--debug` flag, a debug view is printed after each instruction is executed. In conjunction with `--tick <seconds>`, this roughly mimicks the online interpreter.
 
-### Breakpoints
+#### Breakpoints
 
-A breakpoint can be put on a cell by a backtick \`. Each time this cell it executed, a debug view is printed.
+A breakpoint can be put on a cell by a backtick \`. Each time this cell it executed, a debug view is printed. Output to stdout is resumed normally.
 
-## Comment section
+### Comment section
 
-When writing a **><>** program, I like to keep some notes with me such as a pseudocode outline of what it should do, examples of stack manipulation sequences or an explanation of code for PPCG answers. Generally, they can be included in the **><>** program without interrupting its functionality, like in the following example.
+When writing a **><>** program, I like to keep some notes with me such as a pseudocode outline of what it should do, examples of stack manipulation sequences or an explanation of code for PPCG answers. Generally, they can be included in the **><>** program without interrupting its functionality, like in the following example from [this answer](http://codegolf.stackexchange.com/a/111300/63647).
 
     :1%:?vr1(?v1n;
          >n;n0<
-
+    
     :                 Duplicate i (need it if i%1 != 0)
      1                Push 1
       %               Pop i and 1, push i%1
@@ -52,7 +52,7 @@ It is started by double backticks \`\` as the first to characters on a new line.
 
     :1%:?vr1(?v1n;
          >n;n0<
-
+    
     ``
     Here can be anything.
 
@@ -60,3 +60,4 @@ is interpreted as
 
     :1%:?vr1(?v1n;
          >n;n0<
+
