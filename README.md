@@ -2,11 +2,10 @@
 
 This is Harpyon's original [fish.py](https://gist.github.com/anonymous/6392418) implementation, extended with debugging capabilities. Inspiration comes from [fishlanguage.com](http://fishlanguage.com) and the debugging functionality offered by the official  [Hexagony](https://github.com/m-ender/hexagony) interpreter.
 
-I really like **><>**, but lacking a proper way of debugging makes programming in it pretty hard. The online interpreter provides a good start, but still requires to sit trough almost all of the animation, manually pausing at the desired point. Furthermore, it is not guaranteed to be up all the time.
+I really like **><>**, but lacking a proper way of debugging makes programming in it pretty hard. The online interpreter provides a good start, but still requires to sit trough almost all of the animation, manually pausing at the desired point. Furthermore, it is not guaranteed to be up all the time. This interpreter provides for more functionality when writing **><>** programs, without altering the original workings of *fish.py*. The next sections explain what is added.
 
-In general, functionality of the original *fish.py* interpreter shouldn't have changed. Rather, two things were added as explained in the next two sections.
 
-### Debug view
+### Debugging
 
 A debug view prints the program with the last executed instruction in red. Furthermore, it displays
 
@@ -24,6 +23,10 @@ When running the interpreter with the `--debug` flag, a debug view is printed af
 #### Breakpoints
 
 A breakpoint can be put on a cell by a backtick \`. Each time this cell it executed, a debug view is printed. Output to stdout is resumed normally.
+
+#### Animation
+
+Using the `--play` flag, a **><>** program can be executed as an animation. This roughly amounts to debugging without debugging information in a Terminal-clearing environment. Try it, it's fun.
 
 ### Comment section
 
@@ -61,3 +64,6 @@ is interpreted as
     :1%:?vr1(?v1n;
          >n;n0<
 
+### TODO
+
+* Start debugging from a certain point.

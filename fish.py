@@ -20,14 +20,14 @@ from collections import defaultdict
 # constants
 NCHARS = "0123456789abcdef"
 ARITHMETIC = "+-*%" # not division, as it requires special handling
-COMPARISON = { "=": "==", "(": "<", ")": ">" }
-DIRECTIONS = { ">": (1,0), "<": (-1,0), "v": (0,1), "^": (0,-1) }
+COMPARISON = {"=": "==", "(": "<", ")": ">"}
+DIRECTIONS = {">": (1, 0), "<": (-1, 0), "v": (0, 1), "^": (0, -1)}
 MIRRORS = {
-    "/": lambda x,y: (-y, -x),
-    "\\": lambda x,y: (y, x),
-    "|": lambda x,y: (-x, y),
-    "_": lambda x,y: (x, -y),
-    "#": lambda x,y: (-x, -y)
+    "/": lambda x, y: (-y, -x),
+    "\\": lambda x, y: (y, x),
+    "|": lambda x, y: (-x, y),
+    "_": lambda x, y: (x, -y),
+    "#": lambda x, y: (-x, -y)
 }
 
 
@@ -49,7 +49,7 @@ class _Getch:
 
 class _GetchUnix:
     def __init__(self):
-        import tty, sys
+        pass
 
     def __call__(self):
         import sys, tty, termios
@@ -65,10 +65,10 @@ class _GetchUnix:
 
 class _GetchWindows:
     def __init__(self):
-        import msvcrt
+        pass
 
     def __call__(self):
-        import msvcrt
+        import msvcrt           # pylint: disable=import-error
         return msvcrt.getch()
 getch = _Getch()
 
@@ -449,18 +449,23 @@ class Interpreter:
             sys.stdout.write(output)
             sys.stdout.flush()
 
-    def print_(self, debug=False):
+    def print_(self, debug=False, clear=False):
         """
         Print the program being executed.
 
         Keyword arguments:
             debug -- whether to print debug information (default: False)
             output -- whether to resume normal printing of the output (default: False)
+            clear -- whether to clear the terminal before printing (default: False)
         """
+
+        # clear the terminal
+        if clear:
+            print(chr(27) + chr(99))
 
         # print a separator if not in debug mode
         # (not every step is outputted)
-        if not self._debug:
+        if not self._debug and not clear:
             print('')
             self._separator()
 
@@ -469,7 +474,7 @@ class Interpreter:
             for y in self._codebox[x]:
                 # get next character
                 nc = chr(self._codebox[x][y]) if self._codebox[x][y] > 31 else ' '
-                # make bold if current position
+                # make red if current position
                 if self._position == [y, x]:
                     nc = Format.red(nc)
                 # add to string
@@ -587,11 +592,19 @@ if __name__ == "__main__":
                          default=False,
                          dest="always_tick",
                          help="make every instruction cause a tick (delay), even whitespace and skipped instructions")
-    options.add_argument("-d", "--debug",
+    
+    modes = parser.add_argument_group("debug")
+    modes_group = modes.add_mutually_exclusive_group(required=False)
+    modes_group.add_argument("-d", "--debug",
                          action="store_true",
                          default=False,
                          dest="debug",
                          help="turn on debugging, will print a debug view when ticking or on a breakpointed (`) cell")
+    modes_group.add_argument("-p", "--play",
+                         action="store_true",
+                         default=False,
+                         dest="play",
+                         help="run the program as an animation (~ debug without debugging information)")
 
     # parse arguments from sys.argv
     arguments = parser.parse_args()
@@ -626,9 +639,12 @@ if __name__ == "__main__":
             if instr and not instr == " " or arguments.always_tick:
                 time.sleep(arguments.tick)
 
-            # debugging
-            if arguments.debug:
-                interpreter.print_(True)
+                # debugging
+                if arguments.debug:
+                    interpreter.print_(True)
+                # play mode
+                elif arguments.play:
+                    interpreter.print_(False, True)
 
     except KeyboardInterrupt:
         # exit cleanly
